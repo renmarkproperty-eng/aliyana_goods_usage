@@ -1,14 +1,50 @@
-import { ShieldCheck, UserRoundCog } from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  UserManager,
+  type DepartemenOption,
+  type UserRow,
+} from "@/components/user-manager";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
-export default function ManajemenUserPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ManajemenUserPage() {
+  const supabase = createSupabaseAdminClient();
+
+  const [usersRes, detailRes, departemenRes] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id,username,role,created_at")
+      .order("id", { ascending: true }),
+    supabase.from("users_detail").select("user_id,nama,departemen_id"),
+    supabase
+      .from("master_departemen")
+      .select("id,nama")
+      .order("nama", { ascending: true }),
+  ]);
+
+  const error = usersRes.error ?? detailRes.error ?? departemenRes.error;
+
+  const departemen: DepartemenOption[] = departemenRes.data ?? [];
+  const departemenById = new Map(departemen.map((d) => [d.id, d.nama]));
+  const detailByUserId = new Map(
+    (detailRes.data ?? []).map((d) => [d.user_id, d])
+  );
+
+  const users: UserRow[] = (usersRes.data ?? []).map((user) => {
+    const detail = detailByUserId.get(user.id);
+    const departemenId = detail?.departemen_id ?? null;
+
+    return {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      nama: detail?.nama ?? user.username,
+      departemenId,
+      departemenNama:
+        departemenId !== null ? departemenById.get(departemenId) ?? null : null,
+    };
+  });
+
   return (
     <div className="grid gap-5">
       <div>
@@ -20,30 +56,13 @@ export default function ManajemenUserPage() {
         </p>
       </div>
 
-      <Card className="rounded-lg border-stone-200 shadow-sm dark:border-neutral-800">
-        <CardHeader className="gap-2 border-b">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <UserRoundCog className="size-4" />
-            User
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-5">
-          <div className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-9 items-center justify-center rounded-lg bg-muted">
-                <ShieldCheck className="size-4 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">PIC</p>
-                <p className="text-xs text-muted-foreground">
-                  User default aplikasi
-                </p>
-              </div>
-            </div>
-            <Badge>Aktif</Badge>
-          </div>
-        </CardContent>
-      </Card>
+      {error ? (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          Gagal memuat data user: {error.message}
+        </div>
+      ) : (
+        <UserManager users={users} departemen={departemen} />
+      )}
     </div>
   );
 }

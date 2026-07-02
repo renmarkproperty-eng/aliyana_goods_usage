@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import {
   Boxes,
   ClipboardList,
@@ -15,27 +16,31 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getDashboardStats } from "@/lib/pengambilan-barang";
 import { cn } from "@/lib/utils";
 
-const stats = [
-  {
-    label: "Barang Diambil",
-    value: "0",
-    icon: Boxes,
-  },
-  {
-    label: "Riwayat Hari Ini",
-    value: "0",
-    icon: History,
-  },
-  {
-    label: "User Aktif",
-    value: "1",
-    icon: UsersRound,
-  },
-];
+export default async function DashboardPage() {
+  await connection();
 
-export default function DashboardPage() {
+  const dashboardStats = await getDashboardStats();
+  const stats = [
+    {
+      label: "Barang Diambil",
+      value: String(dashboardStats.totalBarangDiambil),
+      icon: Boxes,
+    },
+    {
+      label: "Riwayat Hari Ini",
+      value: String(dashboardStats.riwayatHariIni),
+      icon: History,
+    },
+    {
+      label: "User Aktif",
+      value: String(dashboardStats.userAktif),
+      icon: UsersRound,
+    },
+  ];
+
   return (
     <div className="grid gap-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -120,8 +125,16 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="grid gap-3 pt-5">
             <div className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
-              <span className="text-sm text-muted-foreground">Session</span>
-              <Badge>Aktif</Badge>
+              <span className="text-sm text-muted-foreground">Supabase</span>
+              <Badge
+                variant={
+                  dashboardStats.supabaseConfigured ? "default" : "secondary"
+                }
+              >
+                {dashboardStats.supabaseConfigured
+                  ? "Terhubung"
+                  : "Belum diset"}
+              </Badge>
             </div>
             <div className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
               <span className="text-sm text-muted-foreground">Akses</span>

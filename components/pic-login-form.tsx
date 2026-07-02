@@ -2,7 +2,7 @@
 
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import { LockKeyhole, LogIn, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -32,11 +32,14 @@ export function PicLoginForm() {
         username: String(formData.get("username") ?? ""),
         password: String(formData.get("password") ?? ""),
         redirect: false,
-        callbackUrl: "/dashboard",
       });
 
       if (response?.ok && !response.error) {
-        router.replace("/dashboard");
+        const session = await getSession();
+        const destination =
+          session?.user.role === "admin" ? "/dashboard" : "/pengambilan-barang";
+
+        router.replace(destination);
         router.refresh();
         return;
       }

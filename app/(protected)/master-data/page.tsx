@@ -1,4 +1,5 @@
-import { Boxes, Building2, Ruler } from "lucide-react";
+import Link from "next/link";
+import { Building2, ChevronRight, Ruler, Target } from "lucide-react";
 
 import {
   Card,
@@ -9,19 +10,22 @@ import {
 
 const masterData = [
   {
-    label: "Barang",
-    description: "Daftar item operasional",
-    icon: Boxes,
+    label: "Departemen",
+    description: "Area pengambilan barang",
+    icon: Building2,
+    href: "/master-data/departemen",
   },
   {
     label: "Satuan",
     description: "Unit pemakaian barang",
     icon: Ruler,
+    href: "/master-data/satuan",
   },
   {
-    label: "Departemen",
-    description: "Area pengambilan barang",
-    icon: Building2,
+    label: "Purpose",
+    description: "Tujuan penggunaan barang",
+    icon: Target,
+    href: "/master-data/purpose",
   },
 ];
 
@@ -39,15 +43,19 @@ export default function MasterDataPage() {
         {masterData.map((item) => {
           const Icon = item.icon;
 
-          return (
+          const card = (
             <Card
-              key={item.label}
-              className="rounded-lg border-stone-200 shadow-sm dark:border-neutral-800"
+              className="h-full rounded-lg border-stone-200 shadow-sm transition-colors data-[link=true]:hover:border-primary/40 dark:border-neutral-800"
+              data-link={item.href ? "true" : undefined}
             >
               <CardHeader className="gap-2">
                 <div className="flex items-center justify-between gap-3">
                   <CardTitle className="text-base">{item.label}</CardTitle>
-                  <Icon className="size-4 text-muted-foreground" />
+                  {item.href ? (
+                    <ChevronRight className="size-4 text-muted-foreground" />
+                  ) : (
+                    <Icon className="size-4 text-muted-foreground" />
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
@@ -57,6 +65,20 @@ export default function MasterDataPage() {
               </CardContent>
             </Card>
           );
+
+          if (item.href) {
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                {card}
+              </Link>
+            );
+          }
+
+          return <div key={item.label}>{card}</div>;
         })}
       </div>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -42,21 +42,56 @@ const menuItems = [
 export function DashboardShell({
   children,
   userName,
+  role,
 }: {
   children: ReactNode;
   userName: string;
+  role: "pic" | "admin";
 }) {
   const pathname = usePathname();
-  const [clientPathname, setClientPathname] = useState("");
-
-  useEffect(() => {
-    setClientPathname(pathname);
-  }, [pathname]);
 
   async function handleLogout() {
     await signOut({
       callbackUrl: "/",
     });
+  }
+
+  // PIC tidak punya sidebar, hanya bisa mengakses /pengambilan-barang.
+  if (role !== "admin") {
+    return (
+      <div className="min-h-svh bg-stone-50 text-stone-950 dark:bg-neutral-950 dark:text-stone-50">
+        <header className="sticky top-0 z-20 border-b bg-white/95 px-4 py-3 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/95">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <LayoutDashboard className="size-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold leading-tight">
+                  Item Usage
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  PIC: {userName}
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+            >
+              <LogOut data-icon="inline-start" />
+              Logout
+            </Button>
+          </div>
+        </header>
+
+        <main className="mx-auto min-w-0 max-w-3xl px-4 py-5 sm:px-6">
+          {children}
+        </main>
+      </div>
+    );
   }
 
   return (
@@ -80,7 +115,7 @@ export function DashboardShell({
           <nav className="grid gap-1">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const active = clientPathname === item.href;
+              const active = pathname === item.href;
 
               return (
                 <Link
@@ -132,7 +167,7 @@ export function DashboardShell({
             <nav className="mt-3 flex gap-2 overflow-x-auto pb-1">
               {menuItems.map((item) => {
                 const Icon = item.icon;
-                const active = clientPathname === item.href;
+                const active = pathname === item.href;
 
                 return (
                   <Link
