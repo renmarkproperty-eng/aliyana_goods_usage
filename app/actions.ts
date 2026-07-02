@@ -164,15 +164,19 @@ export async function createPengambilanBarang(formData: FormData) {
     .select("id")
     .single();
 
-  if (pengambilanError) {
+  if (pengambilanError || !pengambilan) {
     throw new Error(
-      `Gagal menyimpan pengambilan barang: ${pengambilanError.message}`
+      `Gagal menyimpan pengambilan barang: ${
+        pengambilanError?.message ?? "tidak diketahui"
+      }`
     );
   }
 
+  const pengambilanId = pengambilan.id;
+
   // Rollback manual bila ada kegagalan di tengah (cascade menghapus anak).
   async function rollback(): Promise<never> {
-    await supabase.from("pengambilan_barang").delete().eq("id", pengambilan.id);
+    await supabase.from("pengambilan_barang").delete().eq("id", pengambilanId);
     throw new Error("Gagal menyimpan data pengambilan.");
   }
 
@@ -190,7 +194,7 @@ export async function createPengambilanBarang(formData: FormData) {
     const { data: detail, error: detailError } = await supabase
       .from("detail_pengambilan_barang")
       .insert({
-        pengambilan_barang_id: pengambilan.id,
+        pengambilan_barang_id: pengambilanId,
         nama_barang: item.nama_barang,
         satuan_id: satuan!.id,
         jumlah_diambil: item.jumlah_diambil,
@@ -221,7 +225,7 @@ export async function createPengambilanBarang(formData: FormData) {
         await supabase
           .from("pengambilan_barang")
           .delete()
-          .eq("id", pengambilan.id);
+          .eq("id", pengambilanId);
         throw new Error(`Gagal menyimpan rincian menu: ${menuError.message}`);
       }
     }
